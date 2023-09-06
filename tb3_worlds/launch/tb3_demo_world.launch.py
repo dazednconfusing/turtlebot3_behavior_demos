@@ -23,7 +23,7 @@ def generate_launch_description():
     )
     # For some reason, there is an error with starting both spawn world and nav
     # in this launch file without this delay ???
-    spawn_world_delayed = TimerAction(period=3.0, actions=[spawn_world])
+
 
     # Start navigation stack
     default_map = join(tb3_world_dir, "maps", "sim_house_map.yaml")
@@ -36,6 +36,8 @@ def generate_launch_description():
             "map": LaunchConfiguration("map", default=default_map),
         }.items(),
     )
+
+    nav_delayed = TimerAction(period=3.0, actions=[nav_stack])
 
     # Set AMCL initial pose
     amcl_init_pose = Node(
@@ -55,5 +57,5 @@ def generate_launch_description():
     )
 
     return LaunchDescription(
-        [spawn_world_delayed, nav_stack, amcl_init_pose, spawn_blocks]
+        [spawn_world, nav_delayed, amcl_init_pose, spawn_blocks]
     )

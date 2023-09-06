@@ -15,17 +15,29 @@ import transforms3d
 import rclpy
 from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
-from gazebo_msgs.srv import SpawnEntity
+from ros_gz_interfaces.srv import SpawnEntity
 
 
 # Define some parameters
 model_dir = os.path.join(get_package_share_directory("tb3_worlds"), "models")
 
+def generate_launch_description():
+ gazebo_spawn_entity = Node(
+        package='ros_gz_sim',
+        executable='create',
+        output='screen',
+        arguments=['-topic', 'robot_description',
+                   '-name', TURTLEBOT3_MODEL,
+                   '-allow_renaming', 'true',
+                   '-x', '0',
+                   '-y', '0',
+                    ],
+        )
 
 class BlockSpawner(Node):
     def __init__(self):
         super().__init__("block_spawner")
-        self.cli = self.create_client(SpawnEntity, "/spawn_entity")
+        self.cli = self.create_client(SpawnEntity, "/gazebo/world/default/create")
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info("Waiting for service...")
         self.get_logger().info("Started block spawner service")
@@ -59,14 +71,14 @@ class BlockSpawner(Node):
 
         req = SpawnEntity.Request()
         req.name = model_name
-        req.xml = model_xml
-        req.initial_pose.position.x = x
-        req.initial_pose.position.y = y
+        req.sdf = model_xml
+        req.pose.position.x = x
+        req.pose.position.y = y
         quat = transforms3d.euler.euler2quat(0, 0, theta)
-        req.initial_pose.orientation.w = quat[0]
-        req.initial_pose.orientation.x = quat[1]
-        req.initial_pose.orientation.y = quat[2]
-        req.initial_pose.orientation.z = quat[3]
+        req.pose.orientation.w = quat[0]
+        req.pose.orientation.x = quat[1]
+        req.pose.orientation.y = quat[2]
+        req.pose.orientation.z = quat[3]
         future = self.cli.call_async(req)
         rclpy.spin_until_future_complete(self, future)
         return future.result()
@@ -75,7 +87,7 @@ class BlockSpawner(Node):
 if __name__ == "__main__":
     rclpy.init()
 
-    spawner = BlockSpawner()
+    spawner = 
     spawner.spawn_blocks()
 
     rclpy.spin(spawner)

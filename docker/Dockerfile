@@ -4,28 +4,68 @@ ARG ROS_DISTRO=humble
 ########################################
 # Base Image for TurtleBot3 Simulation #
 ########################################
-FROM osrf/ros:${ROS_DISTRO}-desktop as base
+FROM arm64v8/ros:${ROS_DISTRO}-ros-base-jammy as base
+# ROS distribution to use
 ENV ROS_DISTRO=${ROS_DISTRO}
 SHELL ["/bin/bash", "-c"]
-
+ENV GZ_VERSION=fortress
 # Install basic apt packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+# RUN apt-get update && apt-get -y install sudo
+# RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+
+# RUN locale
+# RUN sudo apt update && sudo apt install locales
+# RUN sudo locale-gen en_US en_US.UTF-8
+# RUN sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+# RUN export LANG=en_US.UTF-8
+
+# RUN locale  # verify settings
+# RUN sudo apt-get install -y lsb-release wget gnupg
+# RUN sudo wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+# RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
+# RUN sudo apt-get update
+# RUN sudo apt-get install -y ignition-fortress
+
+# RUN sudo apt update && sudo apt install -y curl
+# RUN sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+# RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+# RUN sudo apt install -y software-properties-common
+# RUN sudo add-apt-repository universe
+RUN sudo apt update
+RUN sudo apt install curl -y
+RUN sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+RUN sudo apt update
+# RUN sudo apt install -y ros-${ROS_DISTRO}-ros-base
+# RUN sudo apt install -y ros-dev-tools
+# RUN sudo rosdep init
+RUN rosdep update
+RUN sudo apt-get install -y mesa-utils libgl1-mesa-glx
+RUN apt-get install ros-${ROS_DISTRO}-ros-gz -yv
+# RUN sudo wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+# RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
+RUN sudo apt-get update
+RUN sudo apt install -y ros-humble-rqt-graph
+RUN apt-get install -y --no-install-recommends \
  git libcanberra-gtk-module libcanberra-gtk3-module fuse3 libfuse2 libqt5svg5-dev \
  python3-pip python3-opencv python3-tk python3-pyqt5.qtwebengine
 
 # Install additional Python modules
 RUN pip3 install matplotlib transforms3d
 
-# Use Cyclone DDS as middleware
-RUN apt-get update && apt-get install -y --no-install-recommends \
- ros-${ROS_DISTRO}-rmw-cyclonedds-cpp
-ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+# # Use Cyclone DDS as middleware
+# RUN apt-get update && apt-get install -y --no-install-recommends
+#  ros-${ROS_DISTRO}-rmw-cyclonedds-cpp
+# ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
 # Create Colcon workspace with external dependencies
 RUN mkdir -p /turtlebot3_ws/src
 WORKDIR /turtlebot3_ws/src
 COPY dependencies.repos .
+ENV GZ_VERSION=fortress
 RUN vcs import < dependencies.repos
+RUN vcs pull
 
 # Build the base Colcon workspace, installing dependencies first.
 WORKDIR /turtlebot3_ws

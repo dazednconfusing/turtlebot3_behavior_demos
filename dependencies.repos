@@ -3,10 +3,19 @@ repositories:
   # TurtleBot3 Repo
   # TODO: Remote once this PR is in the binary release:
   # https://github.com/ROBOTIS-GIT/turtlebot3/pull/916
+  ign_ros2_control:
+    type: git
+    url: https://github.com/ros-controls/gz_ros2_control.git
+    version: humble
+
   turtlebot3:
     type: git
     url: https://github.com/ROBOTIS-GIT/turtlebot3.git
     version: humble-devel
+  turtlebot3_gz:
+    type: git
+    url: https://github.com/dazednconfusing/turtlebot3_simulations.git
+    version: gz-fortress
 
   # py_trees and related packages for Python based behavior trees.
   py_trees:

@@ -26,22 +26,38 @@ services:
     stdin_open: true
     tty: true
     # Networking and IPC for ROS 2
-    network_mode: host
-    ipc: host
+    # network_mode: host
+    # ipc: host
     # Needed to display graphical applications
     privileged: True
     environment:
-      # Needed to define a TurtleBot3 model type
+      # # Needed to define a TurtleBot3 model type
       - TURTLEBOT3_MODEL=${TURTLEBOT3_MODEL:-waffle_pi}
+      # - LIBGL_ALWAYS_INDIRECT=1
+      # # Allows graphical programs in the container.
+      # - DISPLAY=host.docker.internal:0
+      # - QT_X11_NO_MITSHM=1
+      - DISPLAY=novnc:0.0
+    depends_on:
+      - novnc
+    networks:
+      - x11
+    # volumes:
       # Allows graphical programs in the container.
-      - DISPLAY=${DISPLAY}
-      - QT_X11_NO_MITSHM=1
-      - NVIDIA_DRIVER_CAPABILITIES=all
-    volumes:
-      # Allows graphical programs in the container.
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority
-
+      # - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      # - /tmp/.X11-unix:/tmp/.X11-unix
+      # - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority
+  novnc:
+    image: theasp/novnc:latest
+    environment:
+      # Adjust to your screen size
+      - DISPLAY_WIDTH=3000
+      - DISPLAY_HEIGHT=1800
+      - RUN_XTERM=no
+    ports:
+      - "8080:8080"
+    networks:
+      - x11
   # Overlay image containing the example source code.
   overlay:
     extends: base
@@ -77,7 +93,7 @@ services:
   # Runs basic TurtleBot3 simulation
   sim:
     extends: overlay
-    command: ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
+    command: ros2 launch turtlebot3_gz gz_sim.launch.py
 
   # Demo world
   demo-world:
@@ -101,3 +117,6 @@ services:
       tree_type:=${BT_TYPE:?}
       enable_vision:=${ENABLE_VISION:?}
       target_color:=${TARGET_COLOR:?}
+
+networks:
+  x11:
